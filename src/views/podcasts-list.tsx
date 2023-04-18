@@ -4,6 +4,7 @@ import PodcastMainItem from 'components/PodcastMainItem';
 import { NoPodcastsFoundsLocallyOrOutdated } from 'helpers/arePodcastsValid';
 import { Grid } from 'react-loader-spinner';
 import { MainContext } from 'components/ContextWrapper';
+import { customFetch } from 'helpers/asyncServices';
 
 const filterMinLength = 0;
 
@@ -18,22 +19,17 @@ const PodcastsList = (): JSX.Element => {
     const podcasts = NoPodcastsFoundsLocallyOrOutdated('podcasts-list');
     if (podcasts.length === 0) {
       console.log('Fetching ...');
-      // setIsLoading(true);
-      fetch(
+      customFetch(
         `https://api.allorigins.win/get?url=${encodeURIComponent(
           'https://itunes.apple.com/us/rss/toppodcasts/limit=100/genre=1310/json',
         )}`,
-      )
-        .then((response) => {
-          if (response.ok) return response.json();
-          throw new Error('Network response was not ok.');
-        })
-        .then((data) => {
-          const podcasts = JSON.parse(data.contents).feed.entry;
-          localStorage.setItem('podcasts-list', JSON.stringify({ podcasts, expirationDate: new Date().getTime() }));
-          setIsLoading(false);
-          setPodcasts(podcasts);
-        });
+      ).then((data) => {
+        console.log('Fetch completed !');
+        const podcasts = JSON.parse(data.contents).feed.entry;
+        localStorage.setItem('podcasts-list', JSON.stringify({ podcasts, expirationDate: new Date().getTime() }));
+        setIsLoading(false);
+        setPodcasts(podcasts);
+      });
     } else {
       console.log(
         'The list of the podcasts was fetched at least 24h before, NOT fetching data and updating the time ...',

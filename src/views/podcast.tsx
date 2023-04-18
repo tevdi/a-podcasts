@@ -5,6 +5,7 @@ import EpisodeList from 'components/EpisodeList';
 import { NoPodcastsFoundsLocallyOrOutdated } from 'helpers/arePodcastsValid';
 import { Grid } from 'react-loader-spinner';
 import { MainContext } from 'components/ContextWrapper';
+import { customFetch } from 'helpers/asyncServices';
 
 interface IProps {
   showEpisode?: boolean;
@@ -29,29 +30,21 @@ const WrapperPodcast = ({ showEpisode, showListEpisodes }: IProps): JSX.Element 
     const podcasts = NoPodcastsFoundsLocallyOrOutdated(podcastId);
     if (podcasts.length === 0) {
       console.log('Fetching ...');
-
-      fetch(
+      customFetch(
         `https://api.allorigins.win/get?url=${encodeURIComponent(
           `https://itunes.apple.com/lookup?id=${podcastId}&media=podcast &entity=podcastEpisode&limit=20`,
         )}`,
-      )
-        .then((response) => {
-          if (response.ok) return response.json();
-          throw new Error('Network response was not ok.');
-        })
-        .then((data) => {
-          const parsedData = JSON.parse(data.contents);
-          const podcast = {
-            attributes: parsedData['results'][0],
-            episodesList: parsedData['results'].slice(1),
-          };
-          localStorage.setItem(
-            podcastId,
-            JSON.stringify({ podcasts: [podcast], expirationDate: new Date().getTime() }),
-          );
-          setPodcastDetails(podcast);
-          setIsLoading(false);
-        });
+      ).then((data) => {
+        console.log('Fetch completed !');
+        const parsedData = JSON.parse(data.contents);
+        const podcast = {
+          attributes: parsedData['results'][0],
+          episodesList: parsedData['results'].slice(1),
+        };
+        localStorage.setItem(podcastId, JSON.stringify({ podcasts: [podcast], expirationDate: new Date().getTime() }));
+        setPodcastDetails(podcast);
+        setIsLoading(false);
+      });
     } else {
       console.log(
         `This podcast with id ${podcastId} was fetched at least 24h before, NOT fetching data and updating the time ...`,
